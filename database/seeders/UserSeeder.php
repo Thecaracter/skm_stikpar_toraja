@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
             'semester_aktif' => 1,
             'status_mahasiswa' => 'aktif',
             'role' => 'admin',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make('password'),
         ]);
 
         // Create Sample Students
@@ -37,7 +37,7 @@ class UserSeeder extends Seeder
                 'semester_aktif' => 1,
                 'status_mahasiswa' => 'aktif',
                 'role' => 'mahasiswa',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password'),
             ]);
         }
     }

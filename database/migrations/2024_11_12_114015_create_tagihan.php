@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->integer('cicilan_ke')->nullable();
             $table->integer('total_cicilan')->nullable();
             $table->enum('status', ['belum_bayar', 'cicilan', 'lunas'])->default('belum_bayar');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

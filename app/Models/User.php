@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -34,16 +33,21 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'tahun_masuk' => 'integer',
-        'semester_aktif' => 'integer',
-        'total_tunggakan' => 'decimal:2',
     ];
 
+    // Relasi ke tagihan
     public function tagihan()
     {
         return $this->hasMany(Tagihan::class);
     }
 
+    // Relasi ke pembayaran
+    public function pembayaran()
+    {
+        return $this->hasManyThrough(Pembayaran::class, Tagihan::class);
+    }
+
+    // Pembayaran yang diverifikasi admin
     public function verifikasi_pembayaran()
     {
         return $this->hasMany(Pembayaran::class, 'verifikasi_oleh');

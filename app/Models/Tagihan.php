@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasTunggakan;
 use App\Traits\AutoCalculateSisaTagihan;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Tagihan extends Model
 {
-    use HasFactory, HasTunggakan, AutoCalculateSisaTagihan;
+    use HasFactory, HasTunggakan, AutoCalculateSisaTagihan, SoftDeletes;
 
     protected $table = 'tagihan';
 
@@ -23,7 +24,7 @@ class Tagihan extends Model
         'sisa_tagihan',
         'cicilan_ke',
         'total_cicilan',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -31,10 +32,9 @@ class Tagihan extends Model
         'jumlah_terbayar' => 'decimal:2',
         'sisa_tagihan' => 'decimal:2',
         'cicilan_ke' => 'integer',
-        'total_cicilan' => 'integer'
+        'total_cicilan' => 'integer',
     ];
 
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
