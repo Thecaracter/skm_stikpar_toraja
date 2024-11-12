@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->enum('status_mahasiswa', ['aktif', 'cuti', 'do'])->default('aktif');
             $table->enum('role', ['admin', 'mahasiswa'])->default('mahasiswa');
             $table->timestamp('email_verified_at')->nullable();
+            $table->longText('foto')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
