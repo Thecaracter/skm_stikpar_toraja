@@ -59,6 +59,12 @@
                     <span class="material-icons text-lg">payments</span>
                     <span x-show="sidebarOpen">{{ __('Konfirmasi Pembayaran') }}</span>
                 </a>
+                <a href="{{ route('riwayat.index') }}"
+                    class="flex items-center space-x-2 px-4 py-2.5 rounded-lg {{ request()->routeIs('riwayat.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                    :class="{ 'justify-center': !sidebarOpen }">
+                    <span class="material-icons text-lg">history</span>
+                    <span x-show="sidebarOpen">{{ __('Riwayat Pembayaran') }}</span>
+                </a>
             </div>
         @endif
 

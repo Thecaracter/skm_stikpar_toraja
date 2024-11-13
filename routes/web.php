@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PembayaranController;
@@ -63,4 +64,11 @@ Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
     Route::get('/{pembayaran}', [PembayaranController::class, 'show'])->name('show');
     Route::get('/bukti/{pembayaran}', [PembayaranController::class, 'showBukti'])->name('bukti');
     Route::post('/{pembayaran}/verifikasi', [PembayaranController::class, 'verifikasi'])->name('verifikasi');
+});
+
+//Riwayat Routes
+Route::prefix('riwayat')->name('riwayat.')->group(function () {
+    Route::get('/', [RiwayatController::class, 'index'])->name('index');
+    Route::get('/{pembayaran}', [RiwayatController::class, 'show'])->name('show');
+    Route::get('/bukti/{pembayaran}', [RiwayatController::class, 'showBukti'])->name('bukti');
 });
