@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 trait HasTunggakan
 {
@@ -12,10 +13,16 @@ trait HasTunggakan
         static::created(function ($model) {
             try {
                 DB::transaction(function () use ($model) {
-                    $model->user->increment('total_tunggakan', $model->jumlah_tagihan);
+                    // Saat membuat tagihan baru, tambahkan ke total tunggakan
+                    $model->user->increment('total_tunggakan', $model->total_tagihan);
+                    Log::info('Tunggakan ditambahkan pada pembuatan tagihan', [
+                        'tagihan_id' => $model->id,
+                        'jumlah' => $model->total_tagihan,
+                        'total_tunggakan_baru' => $model->user->total_tunggakan
+                    ]);
                 });
             } catch (\Exception $e) {
-                \Log::error('Error updating tunggakan on create: ' . $e->getMessage());
+                Log::error('Error updating tunggakan on create: ' . $e->getMessage());
                 throw $e;
             }
         });
@@ -24,28 +31,37 @@ trait HasTunggakan
         static::updated(function ($model) {
             try {
                 DB::transaction(function () use ($model) {
-                    // Update tunggakan jika ada perubahan jumlah tagihan
-                    if ($model->wasChanged('jumlah_tagihan')) {
-                        $selisih = $model->jumlah_tagihan - $model->getOriginal('jumlah_tagihan');
-                        if ($selisih > 0) {
-                            $model->user->increment('total_tunggakan', $selisih);
-                        } else {
-                            $model->user->decrement('total_tunggakan', abs($selisih));
+                    $changes = [];
+
+                    // Update tunggakan jika total_tagihan berubah
+                    if ($model->wasChanged('total_tagihan')) {
+                        $selisihTagihan = $model->total_tagihan - $model->getOriginal('total_tagihan');
+                        if ($selisihTagihan != 0) {
+                            $model->user->increment('total_tunggakan', $selisihTagihan);
+                            $changes['perubahan_total_tagihan'] = $selisihTagihan;
                         }
                     }
 
-                    // Update tunggakan jika ada perubahan jumlah terbayar
-                    if ($model->wasChanged('jumlah_terbayar')) {
-                        $selisihPembayaran = $model->jumlah_terbayar - $model->getOriginal('jumlah_terbayar');
+                    // Update tunggakan jika total_terbayar berubah
+                    if ($model->wasChanged('total_terbayar')) {
+                        $selisihPembayaran = $model->total_terbayar - $model->getOriginal('total_terbayar');
                         if ($selisihPembayaran > 0) {
+                            // Jika ada penambahan pembayaran, kurangi tunggakan
                             $model->user->decrement('total_tunggakan', $selisihPembayaran);
-                        } else {
-                            $model->user->increment('total_tunggakan', abs($selisihPembayaran));
+                            $changes['pengurangan_tunggakan'] = $selisihPembayaran;
                         }
+                    }
+
+                    if (!empty($changes)) {
+                        Log::info('Tunggakan diupdate', [
+                            'tagihan_id' => $model->id,
+                            'perubahan' => $changes,
+                            'total_tunggakan_baru' => $model->user->total_tunggakan
+                        ]);
                     }
                 });
             } catch (\Exception $e) {
-                \Log::error('Error updating tunggakan on update: ' . $e->getMessage());
+                Log::error('Error updating tunggakan on update: ' . $e->getMessage());
                 throw $e;
             }
         });
@@ -54,12 +70,18 @@ trait HasTunggakan
         static::deleted(function ($model) {
             try {
                 DB::transaction(function () use ($model) {
-                    if ($model->sisa_tagihan > 0) {
-                        $model->user->decrement('total_tunggakan', $model->sisa_tagihan);
+                    $sisaTagihan = $model->total_tagihan - $model->total_terbayar;
+                    if ($sisaTagihan > 0) {
+                        $model->user->decrement('total_tunggakan', $sisaTagihan);
+                        Log::info('Tunggakan dikurangi saat tagihan dihapus', [
+                            'tagihan_id' => $model->id,
+                            'pengurangan' => $sisaTagihan,
+                            'total_tunggakan_baru' => $model->user->total_tunggakan
+                        ]);
                     }
                 });
             } catch (\Exception $e) {
-                \Log::error('Error updating tunggakan on delete: ' . $e->getMessage());
+                Log::error('Error updating tunggakan on delete: ' . $e->getMessage());
                 throw $e;
             }
         });
@@ -74,14 +96,22 @@ trait HasTunggakan
             return DB::transaction(function () {
                 $totalTunggakan = $this->where('user_id', $this->user_id)
                     ->where('status', '!=', 'lunas')
-                    ->sum('sisa_tagihan');
+                    ->get()
+                    ->sum(function ($tagihan) {
+                        return $tagihan->total_tagihan - $tagihan->total_terbayar;
+                    });
 
                 $this->user->update(['total_tunggakan' => $totalTunggakan]);
+
+                Log::info('Total tunggakan dihitung ulang', [
+                    'user_id' => $this->user_id,
+                    'total_tunggakan_baru' => $totalTunggakan
+                ]);
 
                 return $totalTunggakan;
             });
         } catch (\Exception $e) {
-            \Log::error('Error recalculating tunggakan: ' . $e->getMessage());
+            Log::error('Error recalculating tunggakan: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -93,7 +123,7 @@ trait HasTunggakan
     {
         return $this->where('user_id', $this->user_id)
             ->where('status', '!=', 'lunas')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('tanggal_jatuh_tempo', 'asc')
             ->get();
     }
 
@@ -104,21 +134,12 @@ trait HasTunggakan
     {
         return $this->where('user_id', $this->user_id)
             ->where('status', '!=', 'lunas')
-            ->select('jenis_pembayaran_id', DB::raw('SUM(sisa_tagihan) as total'))
+            ->select(
+                'jenis_pembayaran_id',
+                DB::raw('SUM(total_tagihan - total_terbayar) as total_tunggakan'),
+                DB::raw('COUNT(*) as jumlah_tagihan')
+            )
             ->groupBy('jenis_pembayaran_id')
-            ->with('jenis_pembayaran')
-            ->get();
-    }
-
-    /**
-     * Mendapatkan detail tunggakan semester tertentu
-     */
-    public function getTunggakanBySemester($semester, $tahunAjaran)
-    {
-        return $this->where('user_id', $this->user_id)
-            ->where('semester', $semester)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->where('status', '!=', 'lunas')
             ->with('jenis_pembayaran')
             ->get();
     }
@@ -133,11 +154,13 @@ trait HasTunggakan
             ->get();
 
         return [
-            'total_tunggakan' => $tunggakan->sum('sisa_tagihan'),
+            'total_tunggakan' => $tunggakan->sum(function ($tagihan) {
+                return $tagihan->total_tagihan - $tagihan->total_terbayar;
+            }),
             'jumlah_tagihan' => $tunggakan->count(),
             'tagihan_belum_bayar' => $tunggakan->where('status', 'belum_bayar')->count(),
             'tagihan_cicilan' => $tunggakan->where('status', 'cicilan')->count(),
-            'semester_tertunggak' => $tunggakan->pluck('semester')->unique()->count()
+            'tagihan_jatuh_tempo' => $tunggakan->where('tanggal_jatuh_tempo', '<', now())->count()
         ];
     }
 
@@ -147,18 +170,6 @@ trait HasTunggakan
     public function hasTunggakan(): bool
     {
         return $this->user->total_tunggakan > 0;
-    }
-
-    /**
-     * Cek apakah memiliki tunggakan untuk semester tertentu
-     */
-    public function hasTunggakanSemester($semester, $tahunAjaran): bool
-    {
-        return $this->where('user_id', $this->user_id)
-            ->where('semester', $semester)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->where('status', '!=', 'lunas')
-            ->exists();
     }
 
     /**
@@ -178,17 +189,16 @@ trait HasTunggakan
                 return [
                     'id' => $tagihan->id,
                     'jenis_pembayaran' => $tagihan->jenis_pembayaran->nama,
-                    'semester' => $tagihan->semester,
-                    'tahun_ajaran' => $tagihan->tahun_ajaran,
-                    'jumlah_tagihan' => $tagihan->jumlah_tagihan,
-                    'sisa_tagihan' => $tagihan->sisa_tagihan,
+                    'total_tagihan' => $tagihan->total_tagihan,
+                    'sisa_tagihan' => $tagihan->total_tagihan - $tagihan->total_terbayar,
                     'status' => $tagihan->status,
+                    'tanggal_jatuh_tempo' => $tagihan->tanggal_jatuh_tempo,
                     'pembayaran' => $tagihan->pembayaran->map(function ($pembayaran) {
                         return [
                             'tanggal' => $pembayaran->created_at,
                             'jumlah' => $pembayaran->jumlah_bayar,
                             'status' => $pembayaran->status,
-                            'verifikasi_oleh' => $pembayaran->verifikator->name ?? null,
+                            'verifikasi_oleh' => optional($pembayaran->verifikator)->name,
                             'tanggal_verifikasi' => $pembayaran->tanggal_verifikasi
                         ];
                     })
@@ -210,6 +220,25 @@ trait HasTunggakan
             'message' => $eligible
                 ? 'Mahasiswa dapat mendaftar semester baru'
                 : 'Mahasiswa memiliki tunggakan yang harus diselesaikan sebelum pendaftaran'
+        ];
+    }
+
+    /**
+     * Mendapatkan detail tunggakan untuk laporan
+     */
+    public function getTunggakanReport()
+    {
+        return [
+            'mahasiswa' => [
+                'nim' => $this->user->nim,
+                'nama' => $this->user->name,
+                'semester_aktif' => $this->user->semester_aktif,
+                'status' => $this->user->status_mahasiswa
+            ],
+            'tunggakan' => $this->getTunggakanSummary(),
+            'detail_per_jenis' => $this->getTunggakanByJenis(),
+            'history_pembayaran' => $this->getTunggakanPaymentHistory(),
+            'generated_at' => now()->format('Y-m-d H:i:s')
         ];
     }
 }

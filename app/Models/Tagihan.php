@@ -17,22 +17,16 @@ class Tagihan extends Model
     protected $fillable = [
         'user_id',
         'jenis_pembayaran_id',
-        'semester',
-        'tahun_ajaran',
-        'jumlah_tagihan',
-        'jumlah_terbayar',
-        'sisa_tagihan',
-        'cicilan_ke',
-        'total_cicilan',
+        'total_tagihan',
+        'total_terbayar',
         'status',
+        'tanggal_jatuh_tempo'
     ];
 
     protected $casts = [
-        'jumlah_tagihan' => 'decimal:2',
-        'jumlah_terbayar' => 'decimal:2',
-        'sisa_tagihan' => 'decimal:2',
-        'cicilan_ke' => 'integer',
-        'total_cicilan' => 'integer',
+        'total_tagihan' => 'decimal:2',
+        'total_terbayar' => 'decimal:2',
+        'tanggal_jatuh_tempo' => 'date'
     ];
 
     public function user()
@@ -48,5 +42,13 @@ class Tagihan extends Model
     public function pembayaran()
     {
         return $this->hasMany(Pembayaran::class);
+    }
+
+    /**
+     * Get sisa tagihan
+     */
+    public function getSisaTagihanAttribute()
+    {
+        return $this->total_tagihan - $this->total_terbayar;
     }
 }

@@ -1,50 +1,52 @@
 <?php
+
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 trait AutoCalculateSisaTagihan
 {
     public static function bootAutoCalculateSisaTagihan()
     {
-        // Sebelum menyimpan data
         static::saving(function (Model $model) {
             try {
                 DB::transaction(function () use ($model) {
-                    // Hitung sisa tagihan
-                    $model->sisa_tagihan = $model->jumlah_tagihan - $model->jumlah_terbayar;
+                    // Log nilai sebelum kalkulasi
+                    Log::info('Sebelum kalkulasi sisa tagihan', [
+                        'tagihan_id' => $model->id,
+                        'total_tagihan' => $model->total_tagihan,
+                        'total_terbayar_original' => $model->getOriginal('total_terbayar'),
+                        'total_terbayar_new' => $model->total_terbayar
+                    ]);
 
-                    // Update status berdasarkan kondisi pembayaran
+                    // Hitung sisa tagihan
+                    $sisa = $model->total_tagihan - $model->total_terbayar;
+
+                    // Update status berdasarkan kondisi pembayaran tanpa modifikasi nilai
                     $model->status = match (true) {
-                        $model->sisa_tagihan <= 0 => 'lunas',
-                        $model->jumlah_terbayar > 0 => 'cicilan',
+                        $sisa <= 0 => 'lunas',
+                        $model->total_terbayar > 0 => 'cicilan',
                         default => 'belum_bayar'
                     };
 
-                    // Atur cicilan jika dapat dicicil
-                    if ($model->jenis_pembayaran && $model->jenis_pembayaran->dapat_dicicil) {
-                        $model->updateCicilanInfo();
-                    }
+                    Log::info('Setelah update status', [
+                        'tagihan_id' => $model->id,
+                        'sisa_tagihan' => $sisa,
+                        'status_baru' => $model->status,
+                        'total_terbayar' => $model->total_terbayar
+                    ]);
+
                 });
             } catch (\Exception $e) {
-                \Log::error('Error calculating sisa tagihan: ' . $e->getMessage());
+                Log::error('Error calculating sisa tagihan: ' . $e->getMessage());
                 throw $e;
             }
         });
     }
 
-    /**
-     * Update informasi cicilan
-     */
-    protected function updateCicilanInfo(): void
-    {
-        if ($this->jumlah_terbayar > 0) {
-            $totalCicilan = $this->total_cicilan ?? 6; // Default 6 cicilan jika tidak diset
-            $nominalPerCicilan = $this->jumlah_tagihan / $totalCicilan;
-            $this->cicilan_ke = ceil($this->jumlah_terbayar / $nominalPerCicilan);
-        }
-    }
+    // Hapus method updateCicilanInfo() karena ini yang menyebabkan perubahan nilai pembayaran
 
     /**
      * Cek status tagihan
@@ -69,11 +71,11 @@ trait AutoCalculateSisaTagihan
      */
     public function getPersentasePembayaran(): float
     {
-        if ($this->jumlah_tagihan <= 0) {
+        if ($this->total_tagihan <= 0) {
             return 0;
         }
 
-        return round(($this->jumlah_terbayar / $this->jumlah_tagihan) * 100, 2);
+        return round(($this->total_terbayar / $this->total_tagihan) * 100, 2);
     }
 
     /**
@@ -81,16 +83,11 @@ trait AutoCalculateSisaTagihan
      */
     public function getCicilanInfo(): array
     {
-        $totalCicilan = $this->total_cicilan ?? 6;
-        $nominalPerCicilan = $this->jumlah_tagihan / $totalCicilan;
-
         return [
-            'total_cicilan' => $totalCicilan,
-            'cicilan_ke' => $this->cicilan_ke ?? 0,
-            'nominal_per_cicilan' => $nominalPerCicilan,
-            'sisa_cicilan' => $totalCicilan - ($this->cicilan_ke ?? 0),
-            'total_terbayar' => $this->jumlah_terbayar,
-            'sisa_tagihan' => $this->sisa_tagihan
+            'total_tagihan' => $this->total_tagihan,
+            'total_terbayar' => $this->total_terbayar,
+            'sisa_tagihan' => $this->total_tagihan - $this->total_terbayar,
+            'persentase_terbayar' => $this->getPersentasePembayaran()
         ];
     }
 
@@ -103,29 +100,7 @@ trait AutoCalculateSisaTagihan
             throw new \Exception('Pembayaran ini tidak dapat dicicil');
         }
 
-        $cicilanInfo = $this->getCicilanInfo();
-        $toleransi = 1000; // toleransi selisih pembayaran (dapat disesuaikan)
-
-        return abs($jumlahBayar - $cicilanInfo['nominal_per_cicilan']) <= $toleransi;
-    }
-
-    /**
-     * Mendapatkan history pembayaran
-     */
-    public function getPembayaranHistory()
-    {
-        return $this->pembayaran()
-            ->orderBy('created_at', 'desc')
-            ->with('verifikator')
-            ->get()
-            ->map(function ($pembayaran) {
-                return [
-                    'tanggal' => $pembayaran->created_at,
-                    'jumlah_bayar' => $pembayaran->jumlah_bayar,
-                    'status' => $pembayaran->status,
-                    'verifikator' => $pembayaran->verifikator ? $pembayaran->verifikator->name : null,
-                    'tanggal_verifikasi' => $pembayaran->tanggal_verifikasi
-                ];
-            });
+        $sisaTagihan = $this->total_tagihan - $this->total_terbayar;
+        return $jumlahBayar <= $sisaTagihan;
     }
 }

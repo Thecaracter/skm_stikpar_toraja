@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             JenisPembayaranSeeder::class,
-            TagihanSeeder::class,
+            // TagihanSeeder::class,
         ]);
     }
 }

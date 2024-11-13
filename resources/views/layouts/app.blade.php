@@ -32,6 +32,7 @@
             </main>
         @endauth
     </div>
+    @stack('scripts')
 </body>
 
 </html>

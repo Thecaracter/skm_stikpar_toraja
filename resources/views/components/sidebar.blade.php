@@ -35,11 +35,29 @@
                 <div x-show="sidebarOpen" class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                     {{ __('Admin Menu') }}
                 </div>
-                <a href=""
+                <a href="{{ route('users.index') }}"
                     class="flex items-center space-x-2 px-4 py-2.5 rounded-lg {{ request()->routeIs('users.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}"
                     :class="{ 'justify-center': !sidebarOpen }">
                     <span class="material-icons text-lg">people</span>
                     <span x-show="sidebarOpen">{{ __('Users') }}</span>
+                </a>
+                <a href="{{ route('jenis-pembayaran.index') }}"
+                    class="flex items-center space-x-2 px-4 py-2.5 rounded-lg {{ request()->routeIs('jenis-pembayaran.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                    :class="{ 'justify-center': !sidebarOpen }">
+                    <span class="material-icons text-lg">credit_score</span>
+                    <span x-show="sidebarOpen">{{ __('Jenis Pembayaran') }}</span>
+                </a>
+                <a href="{{ route('tagihan.index') }}"
+                    class="flex items-center space-x-2 px-4 py-2.5 rounded-lg {{ request()->routeIs('tagihan.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                    :class="{ 'justify-center': !sidebarOpen }">
+                    <span class="material-icons text-lg">receipt_long</span>
+                    <span x-show="sidebarOpen">{{ __('Tagihan') }}</span>
+                </a>
+                <a href="{{ route('pembayaran.index') }}"
+                    class="flex items-center space-x-2 px-4 py-2.5 rounded-lg {{ request()->routeIs('pembayaran.*') ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100' }}"
+                    :class="{ 'justify-center': !sidebarOpen }">
+                    <span class="material-icons text-lg">payments</span>
+                    <span x-show="sidebarOpen">{{ __('Konfirmasi Pembayaran') }}</span>
                 </a>
             </div>
         @endif

@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->text('keterangan')->nullable();
             $table->decimal('nominal', 12, 2);
             $table->boolean('dapat_dicicil')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

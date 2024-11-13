@@ -18,8 +18,8 @@ class DashboardController extends Controller
                 ->where('status_mahasiswa', 'aktif')
                 ->count();
 
-            $total_tagihan = Tagihan::sum('jumlah_tagihan');
-            $total_terbayar = Tagihan::sum('jumlah_terbayar');
+            $total_tagihan = Tagihan::sum('total_tagihan');
+            $total_terbayar = Tagihan::sum('total_terbayar');
 
             // Pembayaran yang perlu diverifikasi
             $pending_verifikasi = Pembayaran::where('status', 'menunggu')
