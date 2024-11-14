@@ -159,7 +159,14 @@ class PembayaranController extends Controller
                 ], 422);
             }
 
-            // Update status pembayaran
+            $tagihan = $pembayaran->tagihan;
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // Nonaktifkan sementara auto-calculating traits
+            $tagihan->unsetEventDispatcher();
+
+            // Update pembayaran terlebih dahulu
             $pembayaran->update([
                 'status' => $request->status,
                 'catatan' => $request->catatan,
@@ -168,46 +175,24 @@ class PembayaranController extends Controller
             ]);
 
             if ($request->status === 'terverifikasi') {
-                $tagihan = $pembayaran->tagihan;
                 $jumlahBayar = $pembayaran->jumlah_bayar;
 
-                // Log status awal
-                Log::info('Status sebelum update', [
-                    'tagihan_id' => $tagihan->id,
-                    'total_tagihan' => $tagihan->total_tagihan,
-                    'total_terbayar_lama' => $tagihan->total_terbayar,
-                    'total_tunggakan_lama' => $tagihan->user->total_tunggakan,
-                    'jumlah_bayar' => $jumlahBayar
-                ]);
-
-                // 1. Update total_terbayar pada tagihan
                 $tagihan->total_terbayar += $jumlahBayar;
 
-                // 2. Update status tagihan
-                if ($tagihan->total_terbayar >= $tagihan->total_tagihan) {
-                    $tagihan->status = 'lunas';
-                } elseif ($tagihan->total_terbayar > 0) {
-                    $tagihan->status = 'cicilan';
-                }
-
-                // 3. Update tunggakan user
                 $user = $tagihan->user;
                 $user->total_tunggakan = $user->total_tunggakan - $jumlahBayar;
-
-                // Simpan perubahan
-                $tagihan->save();
                 $user->save();
-
-                // Log hasil update
-                Log::info('Status setelah update', [
-                    'tagihan_id' => $tagihan->id,
-                    'total_tagihan' => $tagihan->total_tagihan,
-                    'total_terbayar_baru' => $tagihan->total_terbayar,
-                    'status_tagihan' => $tagihan->status,
-                    'total_tunggakan_baru' => $user->total_tunggakan,
-                    'selisih_tunggakan' => $jumlahBayar
-                ]);
             }
+
+            // Update status tagihan tanpa trigger auto-calculate
+            $tagihan->timestamps = false; // Hindari updated_at berubah
+            $tagihan->status = $request->status === 'terverifikasi' && $tagihan->total_terbayar >= $tagihan->total_tagihan
+                ? 'lunas'
+                : 'cicilan';
+            $tagihan->save();
+            $tagihan->timestamps = true;
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             DB::commit();
 

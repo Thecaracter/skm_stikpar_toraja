@@ -3,72 +3,81 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\JenisPembayaranController;
+use App\Http\Controllers\User\UserTagihanController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-// Login Routes
+// Public Routes
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
-// Logout Route
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+// Routes that require authentication
+Route::middleware(['auth'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-// Dashboard
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Profile routes accessible to both roles
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
+        Route::post('/update', [ProfileController::class, 'update'])->name('update');
+    });
 
-// User Routes
-Route::prefix('users')->group(function () {
-    Route::get('/', [UserController::class, 'index'])->name('users.index');
-    Route::post('/', [UserController::class, 'store'])->name('users.store');
-    Route::patch('/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-});
+    // Admin Routes
+    Route::middleware(['role:admin'])->group(function () {
+        // Users Management
+        Route::prefix('users')->group(function () {
+            Route::get('/', [UserController::class, 'index'])->name('users.index');
+            Route::post('/', [UserController::class, 'store'])->name('users.store');
+            Route::patch('/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        });
 
-// Jenis Pembayaran Routes
-Route::prefix('jenis-pembayaran')->group(function () {
-    Route::get('/', [JenisPembayaranController::class, 'index'])->name('jenis-pembayaran.index');
-    Route::post('/', [JenisPembayaranController::class, 'store'])->name('jenis-pembayaran.store');
-    Route::put('/{jenisPembayaran}', [JenisPembayaranController::class, 'update'])->name('jenis-pembayaran.update');
-    Route::delete('/{jenisPembayaran}', [JenisPembayaranController::class, 'destroy'])->name('jenis-pembayaran.destroy');
-});
+        // Payment Types Management
+        Route::prefix('jenis-pembayaran')->group(function () {
+            Route::get('/', [JenisPembayaranController::class, 'index'])->name('jenis-pembayaran.index');
+            Route::post('/', [JenisPembayaranController::class, 'store'])->name('jenis-pembayaran.store');
+            Route::put('/{jenisPembayaran}', [JenisPembayaranController::class, 'update'])->name('jenis-pembayaran.update');
+            Route::delete('/{jenisPembayaran}', [JenisPembayaranController::class, 'destroy'])->name('jenis-pembayaran.destroy');
+        });
 
-// Tagihan Routes
-Route::prefix('tagihan')->name('tagihan.')->group(function () {
-    Route::get('/', [TagihanController::class, 'index'])->name('index');
-    Route::get('/{user}/detail', [TagihanController::class, 'getDetail'])->name('detail');
-    Route::get('/jenis-pembayaran/{jenisPembayaran}', [TagihanController::class, 'getJenisPembayaran'])->name('jenis-pembayaran.detail');
-    Route::get('/{user}/statistics', [TagihanController::class, 'getStatistics'])->name('statistics');
-    Route::post('/{user}', [TagihanController::class, 'store'])->name('store');
-    Route::put('/{user}/{tagihan}', [TagihanController::class, 'update'])->name('update');
-    Route::delete('/{user}/{tagihan}', [TagihanController::class, 'destroy'])->name('destroy');
-});
+        // Bills Management
+        Route::prefix('tagihan')->name('tagihan.')->group(function () {
+            Route::get('/', [TagihanController::class, 'index'])->name('index');
+            Route::get('/{user}/detail', [TagihanController::class, 'getDetail'])->name('detail');
+            Route::get('/jenis-pembayaran/{jenisPembayaran}', [TagihanController::class, 'getJenisPembayaran'])->name('jenis-pembayaran.detail');
+            Route::get('/{user}/statistics', [TagihanController::class, 'getStatistics'])->name('statistics');
+            Route::post('/{user}', [TagihanController::class, 'store'])->name('store');
+            Route::put('/{user}/{tagihan}', [TagihanController::class, 'update'])->name('update');
+            Route::delete('/{user}/{tagihan}', [TagihanController::class, 'destroy'])->name('destroy');
+        });
 
-// Pembayaran Routes
-Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
-    Route::get('/', [PembayaranController::class, 'index'])->name('index');
-    Route::get('/search', [PembayaranController::class, 'search'])->name('search'); // Pindahkan search sebelum route dengan parameter
-    Route::get('/{pembayaran}', [PembayaranController::class, 'show'])->name('show');
-    Route::get('/bukti/{pembayaran}', [PembayaranController::class, 'showBukti'])->name('bukti');
-    Route::post('/{pembayaran}/verifikasi', [PembayaranController::class, 'verifikasi'])->name('verifikasi');
-});
+        // Payments Management
+        Route::prefix('pembayaran')->name('pembayaran.')->group(function () {
+            Route::get('/', [PembayaranController::class, 'index'])->name('index');
+            Route::get('/search', [PembayaranController::class, 'search'])->name('search');
+            Route::get('/{pembayaran}', [PembayaranController::class, 'show'])->name('show');
+            Route::get('/bukti/{pembayaran}', [PembayaranController::class, 'showBukti'])->name('bukti');
+            Route::post('/{pembayaran}/verifikasi', [PembayaranController::class, 'verifikasi'])->name('verifikasi');
+        });
 
-//Riwayat Routes
-Route::prefix('riwayat')->name('riwayat.')->group(function () {
-    Route::get('/', [RiwayatController::class, 'index'])->name('index');
-    Route::get('/{pembayaran}', [RiwayatController::class, 'show'])->name('show');
-    Route::get('/bukti/{pembayaran}', [RiwayatController::class, 'showBukti'])->name('bukti');
+        // Payment History
+        Route::prefix('riwayat')->name('riwayat.')->group(function () {
+            Route::get('/', [RiwayatController::class, 'index'])->name('index');
+            Route::get('/{pembayaran}', [RiwayatController::class, 'show'])->name('show');
+            Route::get('/bukti/{pembayaran}', [RiwayatController::class, 'showBukti'])->name('bukti');
+        });
+    });
+
+    // Mahasiswa Routes
+    Route::middleware(['role:mahasiswa'])->group(function () {
+        Route::prefix('user')->name('user.')->group(function () {
+            Route::get('/tagihan', [UserTagihanController::class, 'index'])->name('tagihan.index');
+            Route::post('/tagihan/{tagihan}/pembayaran', [UserTagihanController::class, 'bayar'])->name('tagihan.pembayaran');
+            Route::put('/tagihan/{tagihan}/pembayaran/{pembayaran}', [UserTagihanController::class, 'updatePembayaran'])->name('tagihan.pembayaran.update');
+        });
+    });
 });

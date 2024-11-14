@@ -19,8 +19,8 @@
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm">Total Mahasiswa</p>
-                        <p class="text-xl font-bold text-gray-800">{{ $total_mahasiswa }}</p>
-                        <p class="text-sm text-gray-500">{{ $mahasiswa_aktif }} Aktif</p>
+                        <p class="text-xl font-bold text-gray-800">{{ $total_mahasiswa ?? 0 }}</p>
+                        <p class="text-sm text-gray-500">{{ $mahasiswa_aktif ?? 0 }} Aktif</p>
                     </div>
                     <div class="bg-blue-100 p-3 rounded-full">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,9 +35,13 @@
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm">Total Tagihan</p>
-                        <p class="text-xl font-bold text-gray-800">Rp {{ number_format($total_tagihan, 0, ',', '.') }}</p>
-                        <p class="text-sm text-gray-500">Terbayar:
-                            {{ number_format(($total_terbayar / $total_tagihan) * 100, 1) }}%</p>
+                        <p class="text-xl font-bold text-gray-800">Rp {{ number_format($total_tagihan ?? 0, 0, ',', '.') }}
+                        </p>
+                        @if (isset($total_tagihan) && isset($total_terbayar) && $total_tagihan > 0)
+                            <p class="text-sm text-gray-500">Terbayar:
+                                {{ number_format(($total_terbayar / $total_tagihan) * 100, 1) }}%
+                            </p>
+                        @endif
                     </div>
                     <div class="bg-green-100 p-3 rounded-full">
                         <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +56,7 @@
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm">Menunggu Verifikasi</p>
-                        <p class="text-xl font-bold text-gray-800">{{ $pending_verifikasi->count() }}</p>
+                        <p class="text-xl font-bold text-gray-800">{{ $pending_verifikasi->count() ?? 0 }}</p>
                         <p class="text-sm text-gray-500">Pembayaran</p>
                     </div>
                     <div class="bg-yellow-100 p-3 rounded-full">
@@ -69,7 +73,7 @@
                     <div>
                         <p class="text-gray-600 text-sm">Total Tunggakan</p>
                         <p class="text-xl font-bold text-gray-800">Rp
-                            {{ number_format($total_tagihan - $total_terbayar, 0, ',', '.') }}</p>
+                            {{ number_format(($total_tagihan ?? 0) - ($total_terbayar ?? 0), 0, ',', '.') }}</p>
                     </div>
                     <div class="bg-red-100 p-3 rounded-full">
                         <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +104,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
-                                @forelse($pending_verifikasi as $pembayaran)
+                                @forelse($pending_verifikasi ?? [] as $pembayaran)
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">
@@ -117,7 +121,8 @@
                                             {{ $pembayaran->created_at->format('d M Y') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <a href="#" class="text-primary hover:text-primary-dark">Verifikasi</a>
+                                            <a href="{{ route('pembayaran.index') }}"
+                                                class="text-primary hover:text-primary-dark">Verifikasi</a>
                                         </td>
                                     </tr>
                                 @empty
@@ -144,13 +149,12 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mahasiswa
                                     </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total
-                                        Tunggakan
-                                    </th>
+                                        Tunggakan</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
-                                @forelse($mahasiswa_tunggakan as $mahasiswa)
+                                @forelse($mahasiswa_tunggakan ?? [] as $mahasiswa)
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $mahasiswa->name }}</div>
@@ -163,7 +167,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span
                                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {{ $mahasiswa->status_mahasiswa === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                {{ $mahasiswa->status_mahasiswa === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                                 {{ ucfirst($mahasiswa->status_mahasiswa) }}
                                             </span>
                                         </td>
@@ -181,13 +185,13 @@
                 </div>
             </div>
         </div>
-    @elseif(auth()->user()->role === 'mahasiswa')
+    @else
         <div class="space-y-6">
             <!-- Header Section -->
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
+                        <h1 class="text-2xl font-bold text-gray-800">Selamat Datang, {{ Auth::user()->name }}</h1>
                         <p class="text-gray-600">{{ strtolower(Auth::user()->role) }}</p>
                     </div>
                     <div class="text-right bg-blue-50 px-4 py-2 rounded-lg">
@@ -198,16 +202,18 @@
             </div>
 
             <!-- Stats Grid -->
+            <!-- Stats Grid for Student -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Total Tagihan -->
+                <!-- Total Tunggakan -->
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Total Tagihan</p>
+                        <p class="text-gray-600 text-sm">Total Tunggakan</p>
                         <p class="text-xl font-bold text-gray-800">Rp
-                            {{ number_format(Auth::user()->total_tunggakan, 0, ',', '.') }}</p>
+                            {{ number_format($total_tunggakan ?? 0, 0, ',', '.') }}</p>
+                        <p class="text-sm text-gray-500">Total tagihan yang belum dibayar</p>
                     </div>
-                    <div class="bg-blue-100 p-3 rounded-full">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
                             </path>
@@ -215,11 +221,13 @@
                     </div>
                 </div>
 
-                <!-- Status -->
+                <!-- Total Terbayar -->
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Status</p>
-                        <p class="text-xl font-bold text-gray-800">{{ ucfirst(Auth::user()->status_mahasiswa) }}</p>
+                        <p class="text-gray-600 text-sm">Total Terbayar</p>
+                        <p class="text-xl font-bold text-gray-800">Rp
+                            {{ number_format($pembayaran_terverifikasi ?? 0, 0, ',', '.') }}</p>
+                        <p class="text-sm text-gray-500">Total pembayaran terverifikasi</p>
                     </div>
                     <div class="bg-green-100 p-3 rounded-full">
                         <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,26 +237,27 @@
                     </div>
                 </div>
 
-                <!-- Tahun Masuk -->
+                <!-- Status Mahasiswa -->
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Tahun Masuk</p>
-                        <p class="text-xl font-bold text-gray-800">{{ Auth::user()->tahun_masuk }}</p>
+                        <p class="text-gray-600 text-sm">Status</p>
+                        <p class="text-xl font-bold text-gray-800">{{ ucfirst($user->status_mahasiswa) }}</p>
+                        <p class="text-sm text-gray-500">Status akademik saat ini</p>
                     </div>
-                    <div class="bg-purple-100 p-3 rounded-full">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                            </path>
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
                     </div>
                 </div>
 
-                <!-- Pembayaran -->
+                <!-- Transaksi Pembayaran -->
                 <div class="bg-white rounded-lg shadow p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-gray-600 text-sm">Pembayaran</p>
+                        <p class="text-gray-600 text-sm">Transaksi Pembayaran</p>
                         <p class="text-xl font-bold text-gray-800">{{ $pembayaran_count ?? 0 }}</p>
+                        <p class="text-sm text-gray-500">Total transaksi terverifikasi</p>
                     </div>
                     <div class="bg-yellow-100 p-3 rounded-full">
                         <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +271,7 @@
 
             <!-- Tagihan Terbaru -->
             <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div class="p-6 border-b border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-800">Tagihan Terbaru</h2>
                 </div>
 
@@ -270,54 +279,44 @@
                     <table class="w-full">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Jenis
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis
                                     Pembayaran</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Jumlah</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tenggat</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenggat</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @forelse($tagihan_terbaru ?? [] as $tagihan)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <p class="text-sm font-medium text-gray-900">
-                                            {{ $tagihan->jenis_pembayaran->nama }}
-                                        </p>
-                                        <p class="text-sm text-gray-500">Semester {{ $tagihan->semester }}</p>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ $tagihan->jenis_pembayaran->nama ?? 'Tidak ada nama' }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <p class="text-sm text-gray-900">Rp
-                                            {{ number_format($tagihan->jumlah_tagihan, 0, ',', '.') }}</p>
-                                        @if ($tagihan->status == 'cicilan')
-                                            <p class="text-xs text-gray-500">Terbayar: Rp
-                                                {{ number_format($tagihan->jumlah_terbayar, 0, ',', '.') }}</p>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            Rp {{ number_format($tagihan->total_tagihan ?? 0, 0, ',', '.') }}
+                                        </div>
+                                        @if (($tagihan->total_terbayar ?? 0) > 0)
+                                            <div class="text-xs text-gray-500">
+                                                Terbayar: Rp {{ number_format($tagihan->total_terbayar, 0, ',', '.') }}
+                                            </div>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if ($tagihan->status == 'lunas')
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                Lunas
-                                            </span>
-                                        @elseif($tagihan->status == 'cicilan')
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                Cicilan
-                                            </span>
-                                        @else
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                Belum Bayar
-                                            </span>
-                                        @endif
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            @if ($tagihan->status == 'lunas') bg-green-100 text-green-800
+                                            @elseif($tagihan->status == 'cicilan')
+                                                bg-yellow-100 text-yellow-800
+                                            @else
+                                                bg-red-100 text-red-800 @endif">
+                                            {{ ucfirst($tagihan->status ?? 'belum_bayar') }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $tagihan->created_at->addDays(7)->format('d M Y') }}
+                                        {{ $tagihan->tanggal_jatuh_tempo ? \Carbon\Carbon::parse($tagihan->tanggal_jatuh_tempo)->format('d M Y') : '-' }}
                                     </td>
                                 </tr>
                             @empty
@@ -332,11 +331,5 @@
                 </div>
             </div>
         </div>
-    @else
-        <div class="bg-white rounded-lg shadow p-6">
-            <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
-            <p class="text-gray-600">Anda Bukan Salah Satu dari role,anda hacker?/p>
-        </div>
     @endif
-
 @endsection

@@ -23,6 +23,7 @@ class User extends Authenticatable
         'status_mahasiswa',
         'role',
         'password',
+        'foto'
     ];
 
     protected $hidden = [

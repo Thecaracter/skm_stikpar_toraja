@@ -12,6 +12,22 @@
 <body class="antialiased">
     @yield('content')
     @stack('scripts')
+    <script>
+        console.log(`
+        ╔═══════════════════════════════════════════════╗
+        ║     👨‍💻 Created with Love by:                 ║ 
+        ║     🌟 Codinging.ind                         ║
+        ║     💻 Rizqi Nur Andi Putra                  ║
+        ║                                              ║
+        ║     🎮 Butuh Joki Project/Tugas?             ║
+        ║     💯 Dijamin Aman, Cepat & Berkualitas!    ║
+        ║     💎 Harga Mahasiswa Friendly              ║
+        ║     ⚡ Proses Express 1x24 Jam               ║
+        ║                                              ║
+        ║     📱 Langsung DM TikTok: @coding.in_        ║
+        ║     ✨ Your Code is Our Priority!            ║
+        ╚═══════════════════════════════════════════════╝`);
+    </script>
 </body>
 
 </html>

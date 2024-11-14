@@ -1,18 +1,20 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Tagihan;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        if (auth()->user()->role === 'admin') {
-            // Statistik untuk Admin
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            // Admin dashboard logic remains the same
             $total_mahasiswa = User::where('role', 'mahasiswa')->count();
             $mahasiswa_aktif = User::where('role', 'mahasiswa')
                 ->where('status_mahasiswa', 'aktif')
@@ -21,14 +23,12 @@ class DashboardController extends Controller
             $total_tagihan = Tagihan::sum('total_tagihan');
             $total_terbayar = Tagihan::sum('total_terbayar');
 
-            // Pembayaran yang perlu diverifikasi
             $pending_verifikasi = Pembayaran::where('status', 'menunggu')
                 ->with(['tagihan.user', 'tagihan.jenis_pembayaran'])
                 ->latest()
                 ->take(5)
                 ->get();
 
-            // 5 Mahasiswa dengan tunggakan terbesar
             $mahasiswa_tunggakan = User::where('role', 'mahasiswa')
                 ->where('total_tunggakan', '>', 0)
                 ->orderBy('total_tunggakan', 'desc')
@@ -45,17 +45,51 @@ class DashboardController extends Controller
             ));
         }
 
-        // Untuk Mahasiswa (kode yang sudah ada)
-        $tagihan_terbaru = Tagihan::with('jenis_pembayaran')
-            ->where('user_id', auth()->id())
-            ->latest()
-            ->take(5)
-            ->get();
+        if ($user->role === 'mahasiswa') {
+            $tagihan_aktif = Tagihan::with(['jenis_pembayaran', 'pembayaran'])
+                ->where('user_id', $user->id)
+                ->orderBy('tanggal_jatuh_tempo', 'desc')
+                ->get();
 
-        $pembayaran_count = Pembayaran::whereHas('tagihan', function ($query) {
-            $query->where('user_id', auth()->id());
-        })->where('status', 'terverifikasi')->count();
+            $total_tagihan = $tagihan_aktif->sum('total_tagihan');
+            $total_terbayar = $tagihan_aktif->sum('total_terbayar');
+            $total_tunggakan = $total_tagihan - $total_terbayar;
+            $tagihan_terbaru = $tagihan_aktif->take(5);
 
-        return view('pages.dashboard', compact('tagihan_terbaru', 'pembayaran_count'));
+            $pembayaran_terverifikasi = Pembayaran::whereHas('tagihan', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+                ->where('status', 'terverifikasi')
+                ->sum('jumlah_bayar');
+
+            $pembayaran_count = Pembayaran::whereHas('tagihan', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+                ->where('status', 'terverifikasi')
+                ->count();
+
+            // Update user's total_tunggakan
+            if ($user->total_tunggakan != $total_tunggakan) {
+                $user->total_tunggakan = $total_tunggakan;
+                $user->save();
+            }
+
+            return view('pages.dashboard', compact(
+                'tagihan_terbaru',
+                'total_tagihan',
+                'total_terbayar',
+                'total_tunggakan',
+                'pembayaran_terverifikasi',
+                'pembayaran_count',
+                'user'
+            ));
+        }
+
+        return view('pages.dashboard', [
+            'tagihan_terbaru' => collect(),
+            'total_tagihan' => 0,
+            'total_terbayar' => 0,
+            'pembayaran_count' => 0
+        ]);
     }
 }
