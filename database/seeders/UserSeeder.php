@@ -24,6 +24,18 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'password' => Hash::make('password'),
         ]);
+        User::create([
+            'name' => 'Rizqi',
+            'email' => 'semuamana@gmail.com',
+            'nim' => 'ADMIN002',
+            'alamat' => 'Jl. Admin No. 1',
+            'no_telepon' => '08123456831',
+            'tahun_masuk' => 2024,
+            'semester_aktif' => 0,
+            'status_mahasiswa' => 'aktif',
+            'role' => 'admin',
+            'password' => Hash::make('password'),
+        ]);
 
         // Create Sample Students
         for ($i = 1; $i <= 5; $i++) {

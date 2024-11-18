@@ -37,7 +37,7 @@
         console.log(`
         ╔═══════════════════════════════════════════════╗
         ║     👨‍💻 Created with Love by:                 ║ 
-        ║     🌟 Codinging.ind                         ║
+        ║     🌟 Coding.in                         ║
         ║     💻 Rizqi Nur Andi Putra                  ║
         ║                                              ║
         ║     🎮 Butuh Joki Project/Tugas?             ║

@@ -8,12 +8,28 @@ use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\TagihanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\JenisPembayaranController;
 use App\Http\Controllers\User\UserTagihanController;
 
 // Public Routes
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
+    ->middleware('guest')
+    ->name('password.request');
+
+Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLink'])
+    ->middleware('guest')
+    ->name('password.email');
+
+Route::get('reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])
+    ->middleware('guest')
+    ->name('password.reset');
+
+Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])
+    ->middleware('guest')
+    ->name('password.update');
 
 // Routes that require authentication
 Route::middleware(['auth'])->group(function () {

@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -52,5 +53,9 @@ class User extends Authenticatable
     public function verifikasi_pembayaran()
     {
         return $this->hasMany(Pembayaran::class, 'verifikasi_oleh');
+    }
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

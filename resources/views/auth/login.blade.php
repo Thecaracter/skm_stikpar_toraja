@@ -63,10 +63,9 @@
                     <!-- Remember Me & Forgot Password -->
                     <div class="flex items-center justify-between">
                         <label class="flex items-center">
-                            <input type="checkbox" name="remember" class="form-checkbox">
-                            <span class="ml-2 text-sm text-gray-600">Ingat Saya</span>
+                            <span class="ml-2 text-sm text-gray-600"></span>
                         </label>
-                        <a href="#"
+                        <a href="/forgot-password"
                             class="text-sm font-medium text-primary hover:text-primary-dark transition-colors">
                             Lupa Password?
                         </a>
@@ -97,7 +96,8 @@
                         <i class="bi bi-book"></i>
                         <span>Panduan Pengguna</span>
                     </a>
-                    <a href="#" class="help-link">
+                    <a href="https://wa.me/6283182192666?text=min%20mau%20joki%20nih%20bisa%20bantu%20nggak%2Cadmin%20ganteng%20deh"
+                        class="help-link">
                         <i class="bi bi-headset"></i>
                         <span>Pusat Bantuan</span>
                     </a>
