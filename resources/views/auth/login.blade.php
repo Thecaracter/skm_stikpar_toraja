@@ -106,7 +106,7 @@
 
             <!-- Footer Text -->
             <p class="mt-8 text-center text-sm text-white/80">
-                &copy; {{ date('Y') }} Universitas. All rights reserved.
+                &copy; {{ date('Y') }} Stikpar Toraja. All rights reserved.
             </p>
         </div>
     </div>
