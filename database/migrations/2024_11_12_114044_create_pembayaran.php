@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->text('catatan')->nullable();
             $table->timestamp('tanggal_verifikasi')->nullable();
             $table->foreignId('verifikasi_oleh')->nullable()->constrained('users');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

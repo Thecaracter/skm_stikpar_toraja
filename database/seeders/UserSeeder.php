@@ -24,33 +24,33 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'password' => Hash::make('password'),
         ]);
-        User::create([
-            'name' => 'Rizqi',
-            'email' => 'semuamana@gmail.com',
-            'nim' => 'ADMIN002',
-            'alamat' => 'Jl. Admin No. 1',
-            'no_telepon' => '08123456831',
-            'tahun_masuk' => 2024,
-            'semester_aktif' => 0,
-            'status_mahasiswa' => 'aktif',
-            'role' => 'admin',
-            'password' => Hash::make('password'),
-        ]);
+        // User::create([
+        //     'name' => 'Rizqi',
+        //     'email' => 'semuamana@gmail.com',
+        //     'nim' => 'ADMIN002',
+        //     'alamat' => 'Jl. Admin No. 1',
+        //     'no_telepon' => '08123456831',
+        //     'tahun_masuk' => 2024,
+        //     'semester_aktif' => 0,
+        //     'status_mahasiswa' => 'aktif',
+        //     'role' => 'admin',
+        //     'password' => Hash::make('password'),
+        // ]);
 
         // Create Sample Students
-        for ($i = 1; $i <= 5; $i++) {
-            User::create([
-                'name' => "Mahasiswa $i",
-                'email' => "mahasiswa$i@gmail.com",
-                'nim' => "2024" . str_pad($i, 4, '0', STR_PAD_LEFT),
-                'alamat' => "Jl. Mahasiswa No. $i",
-                'no_telepon' => "08" . rand(100000000, 999999999),
-                'tahun_masuk' => 2024,
-                'semester_aktif' => 1,
-                'status_mahasiswa' => 'aktif',
-                'role' => 'mahasiswa',
-                'password' => Hash::make('password'),
-            ]);
-        }
+        // for ($i = 1; $i <= 5; $i++) {
+        //     User::create([
+        //         'name' => "Mahasiswa $i",
+        //         'email' => "mahasiswa$i@gmail.com",
+        //         'nim' => "2024" . str_pad($i, 4, '0', STR_PAD_LEFT),
+        //         'alamat' => "Jl. Mahasiswa No. $i",
+        //         'no_telepon' => "08" . rand(100000000, 999999999),
+        //         'tahun_masuk' => 2024,
+        //         'semester_aktif' => 1,
+        //         'status_mahasiswa' => 'aktif',
+        //         'role' => 'mahasiswa',
+        //         'password' => Hash::make('password'),
+        //     ]);
+        // }
     }
 }

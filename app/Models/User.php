@@ -49,7 +49,6 @@ class User extends Authenticatable
         return $this->hasManyThrough(Pembayaran::class, Tagihan::class);
     }
 
-    // Pembayaran yang diverifikasi admin
     public function verifikasi_pembayaran()
     {
         return $this->hasMany(Pembayaran::class, 'verifikasi_oleh');

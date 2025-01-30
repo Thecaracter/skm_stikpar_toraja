@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Exception;
+use App\Models\User;
+use App\Models\Pembayaran;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\QueryException;
@@ -96,18 +98,35 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         try {
+            DB::beginTransaction();
+
+            // 1. Dapatkan semua tagihan user
+            $tagihanIds = $user->tagihan->pluck('id');
+
+            // 2. Force delete semua pembayaran yang terkait dengan tagihan
+            Pembayaran::whereIn('tagihan_id', $tagihanIds)->forceDelete();
+
+            // 3. Force delete semua tagihan user
+            $user->tagihan()->forceDelete();
+
+            // 4. Set null untuk pembayaran yang diverifikasi oleh user ini
+            Pembayaran::where('verifikasi_oleh', $user->id)->update(['verifikasi_oleh' => null]);
+
+            // 5. Hapus user
             $user->delete();
-            return redirect()->route('users.index')->with('succes', 'User Berhasil dihapus');
-        } catch (ValidationException $e) {
-            return redirect()->route('users.index')->with('error', $e->getMessage());
-        } catch (QueryException $e) {
-            Log::error('Database error: ' . $e->getMessage());
-            return redirect()->route('users.index')->with('error', 'Database error: ' . $e->getMessage());
+
+            DB::commit();
+
+            return redirect()->route('users.index')
+                ->with('success', 'User dan semua data terkait berhasil dihapus');
+
         } catch (Exception $e) {
-            Log::error('Error: ' . $e->getMessage());
-            return redirect()->route('users.index')->with('error', 'Error: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Error deleting user: ' . $e->getMessage());
+
+            return redirect()->route('users.index')
+                ->with('error', 'Gagal menghapus user: ' . $e->getMessage());
         }
     }
-
 
 }

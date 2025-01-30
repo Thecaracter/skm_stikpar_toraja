@@ -377,30 +377,38 @@
             </div>
         </div>
 
-        <!-- Modal Delete -->
-        <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-                <div class="relative bg-white rounded-lg max-w-lg w-full mx-auto shadow-xl p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Konfirmasi Hapus</h3>
-                    <p class="text-gray-500 mb-6">Apakah Anda yakin ingin menghapus user ini?</p>
-                    <form id="deleteForm" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
-                            <button type="button"
-                                onclick="document.getElementById('deleteModal').classList.add('hidden')"
-                                class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                                Batal
-                            </button>
-                            <button type="submit"
-                                class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600">
-                                Hapus
-                            </button>
-                        </div>
-                    </form>
-                </div>
+       <!-- Modal Delete -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+        <div class="relative bg-white rounded-lg max-w-lg w-full mx-auto shadow-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Konfirmasi Hapus</h3>
+                <button onclick="document.getElementById('deleteModal').classList.add('hidden')" 
+                        class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
+            <p class="text-gray-500 mb-6">Apakah Anda yakin ingin menghapus user ini? Semua data terkait user ini juga akan terhapus.</p>
+            <form id="deleteForm" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                    <button type="button"
+                        onclick="document.getElementById('deleteModal').classList.add('hidden')"
+                        class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Ya, Hapus User
+                    </button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
 
 
     </div>
@@ -428,6 +436,17 @@
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
+        function openDeleteModal(userId) {
+    const modal = document.getElementById('deleteModal');
+    const form = document.getElementById('deleteForm');
+    
+    // Set form action URL
+    form.action = `/users/${userId}`;
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
 
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
